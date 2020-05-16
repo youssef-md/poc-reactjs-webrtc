@@ -1,36 +1,35 @@
 const express = require('express');
 const http = require('http');
-const socket = require('socket.io');
-
 const app = express();
 const server = http.createServer(app);
+const socket = require('socket.io');
 const io = socket(server);
 
 const users = {};
 
 io.on('connection', (socket) => {
-  if (!users[socket.id]) users[socket.id] = socket.id;
+  if (!users[socket.id]) {
+    users[socket.id] = socket.id;
+  }
 
   socket.emit('yourID', socket.id);
 
   io.sockets.emit('allUsers', users);
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', function deleteUserFromUsers() {
     delete users[socket.id];
   });
 
-  socket.on('callUser', (data) => {
-    const payload = {
+  socket.on('callUser', function sendDataToCalledUser(data) {
+    io.to(data.userToCall).emit('hey', {
       from: data.from,
       signal: data.signalData,
-    };
-
-    io.to(data.userToCall).emit('call', payload);
+    });
   });
 
-  socket.on('acceptCall', (data) => {
+  socket.on('acceptCall', function finalizeHandshake(data) {
     io.to(data.to).emit('callAccepted', data.signal);
   });
 });
 
-server.listen(8000, () => console.log('server is running on port 8080'));
+server.listen(8000, () => console.log('server is running on port 8000'));
