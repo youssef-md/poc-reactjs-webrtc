@@ -8,13 +8,12 @@ const io = socket(server);
 const users = {};
 
 io.on('connection', (socket) => {
-  if (!users[socket.id]) {
-    users[socket.id] = socket.id;
-  }
-
   socket.emit('yourID', socket.id);
 
-  io.sockets.emit('allUsers', users);
+  socket.on('join', function handleUserJoin(username) {
+    if (!users[socket.id]) users[socket.id] = username;
+    io.sockets.emit('allUsers', users);
+  });
 
   socket.on('disconnect', function deleteUserFromUsers() {
     delete users[socket.id];

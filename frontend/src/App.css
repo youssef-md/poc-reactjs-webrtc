@@ -25,7 +25,6 @@
 }
 
 video {
-  /* flex: 1; */
   width: 50%;
   background-color: #999;
   transform: scaleX(-1);

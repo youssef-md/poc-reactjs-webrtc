@@ -19,6 +19,9 @@ function App() {
   const partnerVideo = useRef(null);
 
   useEffect(() => {
+    const username = window.prompt('Qual o seu nome?');
+    socket.emit('join', username);
+
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: false })
       .then(function setUserStream(stream) {
@@ -32,7 +35,6 @@ function App() {
 
     socket.on('allUsers', (users) => {
       setUsers(users);
-      console.log(users);
     });
 
     socket.on('call', (data) => {});
@@ -42,6 +44,7 @@ function App() {
     const { [userId]: valueOfUserId, ...withoutDisconnectedUser } = users;
     setUsers(withoutDisconnectedUser);
   });
+
   const callPeer = useCallback((id) => {});
 
   const acceptCall = useCallback(() => {});
@@ -58,7 +61,7 @@ function App() {
 
           return (
             <div className="connected-user" key={key}>
-              <strong>{key}</strong>
+              <strong>{users[key]}</strong>
               <button>Ligar</button>
             </div>
           );
