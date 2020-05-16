@@ -37,7 +37,11 @@ function App() {
       setUsers(users);
     });
 
-    socket.on('call', (data) => {});
+    socket.on('calling', (data) => {
+      setReceivingCall(true);
+      setCaller(data.from);
+      setCallerSignal(data.signal);
+    });
   }, []);
 
   socket.on('disconnect', (userId) => {
@@ -45,24 +49,76 @@ function App() {
     setUsers(withoutDisconnectedUser);
   });
 
-  const callPeer = useCallback((id) => {});
+  const callPeer = useCallback(
+    (userToCallId) => {
+      const peer = new Peer({
+        initiator: true,
+        trickle: false,
+        stream: stream,
+      });
 
-  const acceptCall = useCallback(() => {});
+      peer.on('signal', function startHandshake(signalData) {
+        socket.emit('callUser', {
+          signalData,
+          from: yourID,
+          userToCall: userToCallId,
+        });
+      });
+
+      peer.on('stream', setPartnerVideo);
+
+      socket.on('callAccepted', function finishHandshake(signalData) {
+        setCallAccepted(true);
+        peer.signal(signalData);
+      });
+    },
+    [stream, yourID]
+  );
+
+  const acceptCall = useCallback(() => {
+    setCallAccepted(true);
+
+    const peer = new Peer({
+      initiator: false,
+      trickle: false,
+      stream: stream,
+    });
+
+    peer.on('signal', (signalData) => {
+      socket.emit('acceptCall', { signal: signalData, to: caller });
+    });
+
+    peer.on('stream', setPartnerVideo);
+
+    peer.signal(callerSignal);
+  }, [caller, callerSignal, stream]);
+
+  function setPartnerVideo(stream) {
+    if (partnerVideo.current) partnerVideo.current.srcObject = stream;
+  }
 
   return (
     <div className="container">
+      {receivingCall && !callAccepted && (
+        <div className="calling-backdrop">
+          <div className="calling-modal">
+            <strong>{users[caller]} está te ligando...</strong>
+            <button onClick={acceptCall}>Aceitar</button>
+          </div>
+        </div>
+      )}
       <div className="videos">
         <video ref={userVideo} autoPlay />
         <video ref={partnerVideo} autoPlay />
       </div>
       <div className="connected-users">
-        {Object.keys(users).map((key) => {
-          if (key === yourID) return null;
+        {Object.keys(users).map((userId) => {
+          if (userId === yourID) return null;
 
           return (
-            <div className="connected-user" key={key}>
-              <strong>{users[key]}</strong>
-              <button>Ligar</button>
+            <div className="connected-user" key={userId}>
+              <strong>{users[userId]}</strong>
+              <button onClick={() => callPeer(userId)}>Ligar</button>
             </div>
           );
         })}
