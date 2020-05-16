@@ -7,11 +7,12 @@
 #root {
   height: 100vh;
   background: #fafafa;
+  font-family: sans-serif;
 }
 
 .container {
   height: 100%;
-  max-width: 1100px;
+  max-width: 900px;
   margin: auto;
   display: flex;
   flex-direction: column;
@@ -20,7 +21,6 @@
 }
 
 .videos {
-  width: 100%;
   display: flex;
 }
 
@@ -35,14 +35,14 @@ video:first-child {
   border-left: 3px solid blueviolet;
 }
 
-.buttons {
+.connected-users {
   margin-top: 40px;
+  width: 100%;
 }
 
 button {
   padding: 15px 0;
   width: 130px;
-  border-radius: 4px;
   border: 0;
   background-color: blueviolet;
   color: white;
@@ -51,6 +51,15 @@ button {
   font-weight: bold;
 }
 
-button:first-child {
-  margin-right: 30px;
+.connected-user {
+  background-color: #ddd;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 30px;
+}
+
+.connected-user ~ .connected-user {
+  margin-top: 15px;
 }

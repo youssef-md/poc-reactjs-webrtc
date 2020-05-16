@@ -1,14 +1,10 @@
-import React, {
-  useRef,
-  useCallback,
-  useEffect,
-  useState,
-  useMemo,
-} from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import Peer from 'simple-peer';
 
 import './App.css';
+
+const socket = io.connect('http://localhost:8000');
 
 function App() {
   const [yourID, setYourID] = useState('');
@@ -19,13 +15,10 @@ function App() {
   const [callerSignal, setCallerSignal] = useState();
   const [callAccepted, setCallAccepted] = useState(false);
 
-  const userVideo = useRef();
-  const partnerVideo = useRef();
-  const socket = useRef();
+  const userVideo = useRef(null);
+  const partnerVideo = useRef(null);
 
   useEffect(() => {
-    socket.current = io.connect('http://localhost:8000');
-
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: false })
       .then(function setUserStream(stream) {
@@ -33,19 +26,22 @@ function App() {
         if (userVideo.current) userVideo.current.srcObject = stream;
       });
 
-    socket.current.on('yourID', (id) => {
-      console.log(id);
+    socket.on('yourID', (id) => {
       setYourID(id);
     });
 
-    socket.current.on('allUsers', (users) => {
-      console.log(users);
-
+    socket.on('allUsers', (users) => {
       setUsers(users);
+      console.log(users);
     });
-    socket.current.on('call', (data) => {});
+
+    socket.on('call', (data) => {});
   }, []);
 
+  socket.on('disconnect', (userId) => {
+    const { [userId]: valueOfUserId, ...withoutDisconnectedUser } = users;
+    setUsers(withoutDisconnectedUser);
+  });
   const callPeer = useCallback((id) => {});
 
   const acceptCall = useCallback(() => {});
@@ -56,9 +52,17 @@ function App() {
         <video ref={userVideo} autoPlay />
         <video ref={partnerVideo} autoPlay />
       </div>
-      <div className="buttons">
-        <button>Ligar</button>
-        <button>Aceitar</button>
+      <div className="connected-users">
+        {Object.keys(users).map((key) => {
+          if (key === yourID) return null;
+
+          return (
+            <div className="connected-user" key={key}>
+              <strong>{key}</strong>
+              <button>Ligar</button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
